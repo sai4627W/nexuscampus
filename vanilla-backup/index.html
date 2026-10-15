@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NexusCampus · Smart Campus Automation & Live Wayfinding OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/styles.css" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><i data-lucide="hexagon"></i></div>
+        <div class="brand-text">
+          <div class="brand-title">NexusCampus</div>
+          <div class="brand-sub">Smart Campus OS</div>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <button class="nav-item active" data-tab="map"><i data-lucide="map"></i><span>Live Wayfinding</span></button>
+        <button class="nav-item" data-tab="attendance"><i data-lucide="calendar-check"></i><span>Attendance</span></button>
+        <button class="nav-item" data-tab="cafeteria"><i data-lucide="utensils"></i><span>Cafeteria</span></button>
+        <button class="nav-item" data-tab="facilities"><i data-lucide="washing-machine"></i><span>Facilities</span></button>
+        <button class="nav-item" data-tab="maintenance"><i data-lucide="wrench"></i><span>Maintenance</span></button>
+      </nav>
+
+      <div class="sidebar-foot">
+        <div class="student-card">
+          <div class="avatar" id="sAvatar">AR</div>
+          <div class="student-meta">
+            <div class="student-name" id="sName">Aarav Rao</div>
+            <div class="student-sub" id="sId">CSE · 2024A1PS0456</div>
+          </div>
+        </div>
+        <button class="btn ghost full" id="resetBtn"><i data-lucide="rotate-ccw"></i> Reset Demo Data</button>
+      </div>
+    </aside>
+
+    <!-- ================= MAIN ================= -->
+    <div class="main">
+      <header class="topbar">
+        <button class="icon-btn mobile-only" id="menuToggle"><i data-lucide="menu"></i></button>
+
+        <div class="status-pill live">
+          <span class="dot"></span> <span id="liveClock">--:--:--</span>
+        </div>
+
+        <div class="status-pill next-class" id="nextClassPill" title="Next class">
+          <i data-lucide="graduation-cap"></i>
+          <span id="nextClassText">Loading…</span>
+        </div>
+
+        <div class="spacer"></div>
+
+        <button class="status-pill wallet" id="walletPill" title="Campus Wallet">
+          <i data-lucide="wallet"></i> ₹<span id="walletAmt">0</span>
+        </button>
+
+        <button class="search-trigger" id="paletteTrigger">
+          <i data-lucide="search"></i>
+          <span>Search or ask the campus assistant…</span>
+          <kbd>Ctrl K</kbd>
+        </button>
+
+        <button class="icon-btn" id="assistantToggle" title="Campus Assistant"><i data-lucide="sparkles"></i></button>
+      </header>
+
+      <main class="content" id="content">
+        <section class="tab-panel active" id="tab-map"></section>
+        <section class="tab-panel" id="tab-attendance"></section>
+        <section class="tab-panel" id="tab-cafeteria"></section>
+        <section class="tab-panel" id="tab-facilities"></section>
+        <section class="tab-panel" id="tab-maintenance"></section>
+      </main>
+    </div>
+  </div>
+
+  <!-- ================= COMMAND PALETTE ================= -->
+  <div class="overlay" id="paletteOverlay">
+    <div class="palette" role="dialog" aria-modal="true">
+      <div class="palette-input">
+        <i data-lucide="terminal"></i>
+        <input id="paletteInput" placeholder="Type a command… try 'route hostel to ai lab'" autocomplete="off" />
+        <kbd>Esc</kbd>
+      </div>
+      <div class="palette-results" id="paletteResults"></div>
+      <div class="palette-foot">
+        <span><kbd>&#8593;</kbd><kbd>&#8595;</kbd> navigate</span>
+        <span><kbd>&#9166;</kbd> select</span>
+        <span><kbd>Ctrl</kbd>+<kbd>K</kbd> toggle</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ASSISTANT DRAWER ================= -->
+  <div class="drawer-backdrop" id="assistantBackdrop"></div>
+  <aside class="assistant-drawer" id="assistantDrawer">
+    <div class="assistant-head">
+      <div class="assistant-title"><i data-lucide="sparkles"></i> Campus Concierge</div>
+      <button class="icon-btn" id="assistantClose"><i data-lucide="x"></i></button>
+    </div>
+    <div class="assistant-log" id="assistantLog"></div>
+    <div class="assistant-quick" id="assistantQuick"></div>
+    <div class="assistant-input">
+      <input id="assistantInput" placeholder="Ask: where is my next class?" />
+      <button class="icon-btn primary" id="assistantSend"><i data-lucide="send"></i></button>
+    </div>
+  </aside>
+
+  <!-- ================= MODAL ROOT ================= -->
+  <div class="overlay" id="modalOverlay"><div class="modal" id="modalRoot"></div></div>
+
+  <!-- ================= TOASTS ================= -->
+  <div class="toast-stack" id="toastStack"></div>
+
+  <!-- ================= SCRIPTS (classic, no build step) ================= -->
+  <script src="js/util.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/graph.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/attendance.js"></script>
+  <script src="js/cafeteria.js"></script>
+  <script src="js/facilities.js"></script>
+  <script src="js/maintenance.js"></script>
+  <script src="js/command.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
