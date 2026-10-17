@@ -16,6 +16,7 @@ export default function App() {
   const [tab, setTab] = useState(() => { try { return localStorage.getItem('nexus.tab') || 'map' } catch { return 'map' } })
   const [palette, setPalette] = useState(false)
   const [assistant, setAssistant] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [user, setUser] = useState(null)
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function App() {
   useEffect(() => {
     const h = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPalette((p) => !p) }
-      if (e.key === 'Escape') { setPalette(false) }
+      if (e.key === 'Escape') { setPalette(false); setSidebarOpen(false) }
     }
     document.addEventListener('keydown', h)
     return () => document.removeEventListener('keydown', h)
@@ -55,9 +56,10 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
-      <Sidebar tab={tab} setTab={setTab} onReset={onReset} user={user} />
+      <Sidebar tab={tab} setTab={setTab} onReset={onReset} user={user} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {sidebarOpen && <div className="max-md:block hidden fixed inset-0 bg-black/60 z-30" onClick={() => setSidebarOpen(false)} />}
       <div className="flex-1 flex flex-col min-w-0">
-        <Topbar onPalette={() => setPalette(true)} onAssistant={() => setAssistant(true)} />
+        <Topbar onPalette={() => setPalette(true)} onAssistant={() => setAssistant(true)} onMenu={() => setSidebarOpen((o) => !o)} />
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 max-md:p-4">
           <div key={tab} className="anim-fadeUp">
             {tab === 'map' && <MapView routeSignal={routeSignal} />}

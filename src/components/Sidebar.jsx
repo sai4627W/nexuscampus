@@ -11,10 +11,10 @@ const items = [
   { id: 'maintenance', label: 'Maintenance', icon: Wrench },
 ]
 
-export default function Sidebar({ tab, setTab, onReset, user }) {
+export default function Sidebar({ tab, setTab, onReset, user, open, onClose }) {
   const profile = useStore((s) => s.profile)
   return (
-    <aside className="w-[248px] shrink-0 border-r border-white/10 bg-gradient-to-b from-[#12151e]/90 to-[#090a0f]/90 backdrop-blur-md flex flex-col p-[18px_14px] max-md:fixed max-md:top-0 max-md:left-0 max-md:h-full max-md:z-40 max-md:-translate-x-full max-md:transition-transform" id="sidebar">
+    <aside className={`w-[248px] shrink-0 border-r border-white/10 bg-gradient-to-b from-[#12151e] to-[#090a0f] backdrop-blur-md flex flex-col p-[18px_14px] max-md:fixed max-md:top-0 max-md:left-0 max-md:h-full max-md:z-40 max-md:transition-transform max-md:duration-300 ${open ? 'max-md:translate-x-0' : 'max-md:-translate-x-full'}`} id="sidebar">
       <div className="flex items-center gap-3 px-1.5 pb-5">
         <div className="w-[38px] h-[38px] rounded-[11px] grid place-items-center bg-gradient-to-br from-indigo-400 to-cyan-400 text-[#05070c] shadow-[0_0_24px_rgba(129,140,248,0.45)]">
           <Hexagon size={21} />
@@ -32,7 +32,7 @@ export default function Sidebar({ tab, setTab, onReset, user }) {
           return (
             <button
               key={it.id}
-              onClick={() => { setTab(it.id); document.getElementById('sidebar')?.classList.remove('open') }}
+              onClick={() => { setTab(it.id); onClose?.() }}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-[11px] text-[13.5px] font-medium cursor-pointer transition-all border border-transparent ${active ? 'bg-gradient-to-r from-indigo-400/15 to-transparent border-white/15 text-white shadow-[inset_2px_0_0_#818cf8]' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
             >
               <Icon size={17} className={active ? 'text-indigo-300' : ''} />

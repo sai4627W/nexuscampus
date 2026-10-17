@@ -3,7 +3,7 @@ import { Search, Sparkles, Wallet, GraduationCap, Menu } from 'lucide-react'
 import { useStore, toast } from '../lib/store'
 import { fmtClock, timeToMinutes } from '../lib/utils'
 
-export default function Topbar({ onPalette, onAssistant }) {
+export default function Topbar({ onPalette, onAssistant, onMenu }) {
   const profile = useStore((s) => s.profile)
   const timetable = useStore((s) => s.timetable)
   const topUp = useStore((s) => s.topUp)
@@ -30,7 +30,7 @@ export default function Topbar({ onPalette, onAssistant }) {
 
   return (
     <header className="h-[68px] shrink-0 flex items-center gap-2.5 px-5 border-b border-white/10 bg-[#090a0f]/60 backdrop-blur-md z-30">
-      <button className="md:hidden w-[38px] h-[38px] grid place-items-center rounded-[11px] border border-white/10 bg-white/5 text-slate-400 cursor-pointer" onClick={() => document.getElementById('sidebar')?.classList.toggle('open')}>
+      <button type="button" aria-label="Toggle menu" className="md:hidden w-[38px] h-[38px] grid place-items-center rounded-[11px] border border-white/10 bg-white/5 text-slate-400 cursor-pointer active:bg-white/10" onClick={onMenu}>
         <Menu size={18} />
       </button>
 
