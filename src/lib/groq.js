@@ -2,7 +2,7 @@
 // Key comes from .env (VITE_GROQ_API_KEY) — never hardcoded, never committed.
 
 const KEY = import.meta.env.VITE_GROQ_API_KEY
-const MODEL = import.meta.env.VITE_GROQ_MODEL || 'llama-3.3-70b-versatile'
+const MODEL = import.meta.env.VITE_GROQ_MODEL || 'qwen/qwen3.8-27b'
 
 export const hasGroq = () => !!KEY
 

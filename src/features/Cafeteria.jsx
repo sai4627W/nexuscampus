@@ -56,7 +56,9 @@ export default function Cafeteria() {
 
   const setQty = (id, q) => setCart((c) => {
     const n = { ...c }
-    if (q <= 0) delete n[id]; else n[id] = q
+    const next = Math.max(0, Number(q) || 0)
+    if (next <= 0) { delete n[id]; return n }
+    n[id] = next
     return n
   })
 
@@ -105,9 +107,9 @@ export default function Cafeteria() {
                     <div className="flex items-center justify-between gap-2 mt-auto">
                       <div className="font-mono text-emerald-300 font-semibold text-[13px]">₹{m.price}</div>
                       <div className="inline-flex items-center gap-0.5 bg-white/10 rounded-[9px] p-0.5">
-                        <button onClick={() => setQty(m.id, Math.max(0, (cart[m.id] || 0) - 1))} className="w-[26px] h-[26px] grid place-items-center rounded-[7px] hover:bg-white/10 cursor-pointer"><Minus size={14} /></button>
-                        <span className="min-w-5 text-center font-mono text-xs">{cart[m.id] || 0}</span>
-                        <button onClick={() => setQty(m.id, (cart[m.id] || 0) + 1)} className="w-[26px] h-[26px] grid place-items-center rounded-[7px] hover:bg-white/10 cursor-pointer"><Plus size={14} /></button>
+                        <button type="button" onClick={() => setQty(m.id, Math.max(0, (cart[m.id] || 0) - 1))} className="w-[26px] h-[26px] grid place-items-center rounded-[7px] hover:bg-white/10 active:bg-white/20 cursor-pointer"><Minus size={14} /></button>
+                        <span className="min-w-5 text-center font-mono text-xs select-none">{cart[m.id] || 0}</span>
+                        <button type="button" onClick={() => setQty(m.id, (cart[m.id] || 0) + 1)} className="w-[26px] h-[26px] grid place-items-center rounded-[7px] hover:bg-white/10 active:bg-white/20 cursor-pointer"><Plus size={14} /></button>
                       </div>
                     </div>
                   </div>
