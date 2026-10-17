@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Sparkles, X, Send, Loader2 } from 'lucide-react'
+import { Sparkles, X, Send, Loader2, Mic, MicOff } from 'lucide-react'
 import { useStore, toast } from '../lib/store'
 import { resolveNode, shortestPath, walkTime } from '../lib/graph'
 import { timeToMinutes } from '../lib/utils'
-import { conciergeReply, hasGroq } from '../lib/groq'
+import { conciergeReply, dailyBriefing, hasGroq } from '../lib/groq'
 import { Btn } from './ui'
 import { Badge } from './ui'
 
@@ -15,13 +15,33 @@ export default function Assistant({ open, onClose, setTab, setRouteSignal }) {
   ])
   const [val, setVal] = useState('')
   const [thinking, setThinking] = useState(false)
+  const [listening, setListening] = useState(false)
+  const recRef = useRef(null)
   const bodyRef = useRef(null)
+
+  const toggleVoice = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SR) return toast('Voice not supported', 'Try Chrome or Edge on desktop/Android', 'warn')
+    if (listening) { recRef.current?.stop(); return }
+    const rec = new SR()
+    rec.lang = 'en-IN'; rec.interimResults = true; rec.continuous = false
+    rec.onresult = (e) => {
+      const txt = Array.from(e.results).map((r) => r[0].transcript).join('')
+      setVal(txt)
+    }
+    rec.onend = () => setListening(false)
+    rec.onerror = () => { setListening(false); toast('Voice error', 'Check microphone permission', 'error') }
+    recRef.current = rec
+    setListening(true)
+    rec.start()
+  }
   const nodes = useStore((s) => s.nodes)
   const edges = useStore((s) => s.edges)
   const timetable = useStore((s) => s.timetable)
   const menu = useStore((s) => s.menu)
   const crowd = useStore((s) => s.crowd)
   const profile = useStore((s) => s.profile)
+  const tickets = useStore((s) => s.tickets)
 
   useEffect(() => { bodyRef.current?.scrollTo({ top: 99999 }) }, [log, open, thinking])
 
@@ -127,7 +147,21 @@ export default function Assistant({ open, onClose, setTab, setRouteSignal }) {
     }
   }
 
+  const runBriefing = async () => {
+    push({ kind: 'user', text: "Today's briefing" })
+    if (!aiOnline) { push({ kind: 'bot', text: 'Add VITE_GROQ_API_KEY for AI briefings.' }); return }
+    setThinking(true)
+    try {
+      const wd = new Date().getDay()
+      const text = await dailyBriefing({ timetable: timetable[wd] || [], crowd, wallet: profile.wallet, tickets: tickets.filter((t) => t.status !== 'Resolved').length })
+      push({ kind: 'bot', text: text || 'Have a great day on campus!' })
+    } catch (e) {
+      push({ kind: 'bot', text: 'Could not fetch briefing right now.' })
+    } finally { setThinking(false) }
+  }
+
   const quicks = [
+    { label: '☀️ Brief me', run: runBriefing },
     { label: 'Route Hostel→AI Lab', run: () => { doRoute('boys hostel', 'ai lab'); onClose() } },
     { label: 'Order Cold Coffee', run: () => { setTab('cafeteria'); onClose() } },
     { label: 'Where is my next class?', run: () => reply('where is my next class?') },
@@ -162,6 +196,9 @@ export default function Assistant({ open, onClose, setTab, setRouteSignal }) {
           {quicks.map((q) => <Btn key={q.label} size="sm" variant="ghost" onClick={q.run}>{q.label}</Btn>)}
         </div>
         <div className="flex gap-2 p-3.5 border-t border-white/10">
+          <button onClick={toggleVoice} title="Voice input" className={`w-[42px] h-[42px] shrink-0 grid place-items-center rounded-[11px] border cursor-pointer ${listening ? 'bg-rose-400/20 border-rose-400/40 text-rose-300 animate-pulse' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}>
+            {listening ? <MicOff size={18} /> : <Mic size={18} />}
+          </button>
           <input value={val} onChange={(e) => setVal(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') reply(val) }} placeholder={aiOnline ? 'Ask anything about campus…' : 'Ask: where is my next class?'} className="flex-1 h-[42px] px-3.5 bg-[#0c0e15] border border-white/10 rounded-[11px] text-[13px] outline-none focus:border-indigo-400" />
           <button onClick={() => reply(val)} disabled={thinking} className="w-[42px] h-[42px] grid place-items-center rounded-[11px] bg-gradient-to-br from-indigo-400 to-cyan-400 text-[#05070c] cursor-pointer disabled:opacity-50">
             {thinking ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}

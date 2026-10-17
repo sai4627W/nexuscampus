@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { QrCode, Check, X, ShieldCheck, CalendarCheck, History } from 'lucide-react'
+import { QrCode, Check, X, ShieldCheck, CalendarCheck, History, Sparkles, Loader2, AlertTriangle } from 'lucide-react'
 import { useStore, toast } from '../lib/store'
 import { attendanceColor } from '../lib/utils'
+import { attendanceStrategy, hasGroq } from '../lib/groq'
 import { Card, CardTitle, Badge, Btn, Progress, Ring, Modal, Field, inputCls } from '../components/ui'
 
 export function CheckInModal({ onClose, after }) {
@@ -40,9 +41,18 @@ export default function Attendance({ checkInSignal }) {
   const attendanceLog = useStore((s) => s.attendanceLog)
   const markAttendance = useStore((s) => s.markAttendance)
   const [open, setOpen] = useState(false)
+  const [plan, setPlan] = useState(null)
+  const [planBusy, setPlanBusy] = useState(false)
 
   // open from palette
   useMemo(() => { if (checkInSignal) setOpen(true) }, [checkInSignal])
+
+  const runStrategy = async () => {
+    setPlanBusy(true)
+    try { setPlan(await attendanceStrategy(subjects)) }
+    catch (e) { toast('AI strategist failed', String(e.message || e).slice(0, 120), 'error') }
+    finally { setPlanBusy(false) }
+  }
 
   const advice = (pct) => {
     if (pct >= 80) return 'Safe to skip next 2 classes'
@@ -57,8 +67,30 @@ export default function Attendance({ checkInSignal }) {
           <div className="text-[22px] font-bold tracking-tight">Smart Attendance & Margin Calculator</div>
           <div className="text-slate-400 text-[13px] mt-1">Live tracking with margin advice & smart QR check-in</div>
         </div>
-        <Btn variant="primary" onClick={() => setOpen(true)}><QrCode size={16} /> Simulate Smart Class Check-In</Btn>
+        <div className="flex gap-2 flex-wrap">
+          {hasGroq() && <Btn variant="ghost" disabled={planBusy} onClick={runStrategy}>{planBusy ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} AI Attendance Strategist</Btn>}
+          <Btn variant="primary" onClick={() => setOpen(true)}><QrCode size={16} /> Simulate Smart Class Check-In</Btn>
+        </div>
       </div>
+      {plan && (
+        <Card className="mb-4">
+          <CardTitle icon={<Sparkles size={17} />} right={<Badge tone={plan.risk === 'high' ? 'rose' : plan.risk === 'medium' ? 'amber' : 'emerald'}>Risk: {plan.risk}</Badge>}>AI Attendance Strategy</CardTitle>
+          <div className="text-[13px] mb-3">{plan.overall}</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+            {plan.perSubject?.map((p) => (
+              <div key={p.code} className="p-2.5 rounded-[11px] bg-violet-400/5 border border-violet-400/20">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-semibold text-[13px]">{p.code}</span>
+                  <span className="text-[11px] text-slate-400">skip {Math.max(0, p.canSkip)}</span>
+                </div>
+                <div className="text-[11.5px] text-slate-300 mt-0.5">{p.verdict}</div>
+                <div className="text-[11px] text-emerald-300 mt-0.5">→ {p.action}</div>
+              </div>
+            ))}
+          </div>
+          {plan.tip && <div className="flex items-start gap-2 text-[12px] text-slate-400"><AlertTriangle size={14} className="text-amber-300 mt-0.5 shrink-0" />{plan.tip}</div>}
+        </Card>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {subjects.map((sub) => {
           const pct = sub.total === 0 ? 0 : Math.round((sub.attended / sub.total) * 100)

@@ -88,3 +88,35 @@ export async function triageWithAI(title, location) {
   if (!parsed || !DEPTS.includes(parsed.dept) || !PRIS.includes(parsed.priority)) throw new Error('Bad AI response')
   return parsed
 }
+
+// ---------- 5. AI Attendance Strategist ----------
+export async function attendanceStrategy(subjects) {
+  const lines = subjects.map((s) => `${s.code} ${s.name}: ${s.attended}/${s.total} (${Math.round((s.attended / s.total) * 100)}%)`).join('\n')
+  const system = `You are an academic attendance coach. The college requires 75% minimum attendance. Analyze each subject and produce JSON: {"overall":"one-sentence overall verdict","risk":"low|medium|high","perSubject":[{"code":"...","verdict":"...","action":"...","canSkip":number}],"tip":"one exam-focused study tip"}. canSkip = max classes they can safely skip now (0 if already below 75). Output ONLY JSON.`
+  const raw = await callGroq({ system, user: lines, json: true, maxTokens: 700, temperature: 0.3 })
+  const parsed = extractJson(raw)
+  if (!parsed?.overall) throw new Error('Bad AI response')
+  return parsed
+}
+
+// ---------- 6. AI Lost-and-Found Matcher ----------
+export async function matchLostFound(lostItem, allItems) {
+  const list = allItems.map((i) => `- ${i.title} @ ${i.location}`).join('\n')
+  const system = `You match lost items to found reports for a campus. Respond as JSON: {"matches":[{"item":"...","confidence":0-100,"reason":"..."}],"advice":"..."}. If no good matches, return an empty matches array and give advice. Output ONLY JSON.`
+  const raw = await callGroq({ system, user: `New report: ${lostItem}\nExisting reports:\n${list}`, json: true, maxTokens: 400, temperature: 0.3 })
+  const parsed = extractJson(raw)
+  if (!parsed?.matches) throw new Error('Bad AI response')
+  return parsed
+}
+
+// ---------- 7. AI Daily Campus Briefing ----------
+export async function dailyBriefing(ctx) {
+  const tt = ctx.timetable.map((t) => `${t.time} ${t.subject} @${t.room}`).join('; ') || 'no classes'
+  const busy = Object.entries(ctx.crowd).filter(([, v]) => v === 'high').map(([k]) => k).join(', ') || 'nothing too busy'
+  const system = `You are the NexusCampus daily assistant. Write a short, upbeat 3-line briefing (plain text, use newlines, no markdown headers) covering: the day's class plan, the busiest spots to avoid, and one money/saving or food tip. Keep each line under 90 chars.`
+  return callGroq({
+    system,
+    user: `Time now: ${new Date().toLocaleString()}. Classes: ${tt}. Wallet Rs.${ctx.wallet}. Busy zones: ${busy}. Pending tickets: ${ctx.tickets}.`,
+    maxTokens: 300, temperature: 0.7,
+  })
+}

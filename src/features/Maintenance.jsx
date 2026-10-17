@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { AlertCircle, SquareKanban, Send, RefreshCw, ChevronsRight, CheckCircle2, Sparkles, Loader2 } from 'lucide-react'
 import { useStore, toast } from '../lib/store'
 import { triageIssue } from '../lib/seed'
-import { triageWithAI, hasGroq } from '../lib/groq'
+import { triageWithAI, matchLostFound, hasGroq } from '../lib/groq'
 import { uid, formatAgo } from '../lib/utils'
 import { Card, CardTitle, Badge, Btn, Field, inputCls, areaCls } from '../components/ui'
 
@@ -22,6 +22,17 @@ export default function Maintenance() {
   const [loc, setLoc] = useState('')
   const [desc, setDesc] = useState('')
   const [busy, setBusy] = useState(false)
+  const [matchBusy, setMatchBusy] = useState(false)
+  const [matches, setMatches] = useState(null)
+
+  const runMatcher = async () => {
+    const q = desc.trim() || loc.trim()
+    if (!q) return toast('Type an item first', 'Describe what you lost (e.g. "blue water bottle")', 'warn')
+    setMatchBusy(true)
+    try { setMatches(await matchLostFound(q, list)) }
+    catch (e) { toast('AI matcher failed', String(e.message || e).slice(0, 120), 'error') }
+    finally { setMatchBusy(false) }
+  }
 
   const submit = async () => {
     if (!desc.trim()) return toast('Description required', 'Describe the issue to auto-triage', 'error')
@@ -53,7 +64,22 @@ export default function Maintenance() {
           <CardTitle icon={<AlertCircle size={17} />} right={<Badge tone={hasGroq() ? 'violet' : 'amber'}>{hasGroq() ? 'AI Triage Enabled' : 'Auto-Triage Enabled'}</Badge>}>Report New Issue</CardTitle>
           <Field label="Location"><input value={loc} onChange={(e) => setLoc(e.target.value)} placeholder="e.g. Academic Block A Room 204, Library Entrance" className={inputCls} /></Field>
           <Field label="Issue Title / Description"><textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="e.g. AC leaking in Block A Room 204, Lost Blue Water Bottle near Library" className={areaCls} /></Field>
-          <Btn variant="primary" disabled={busy} onClick={submit}>{busy ? <Loader2 size={16} className="animate-spin" /> : hasGroq() ? <Sparkles size={16} /> : <Send size={16} />} {busy ? 'Triaging…' : 'Submit & Auto-Triage'}</Btn>
+          <div className="flex gap-2 flex-wrap">
+            <Btn variant="primary" disabled={busy} onClick={submit}>{busy ? <Loader2 size={16} className="animate-spin" /> : hasGroq() ? <Sparkles size={16} /> : <Send size={16} />} {busy ? 'Triaging…' : 'Submit & Auto-Triage'}</Btn>
+            {hasGroq() && <Btn variant="ghost" disabled={matchBusy} onClick={runMatcher}>{matchBusy ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} AI Match Lost & Found</Btn>}
+          </div>
+          {matches && (
+            <div className="mt-3 p-3 rounded-[11px] bg-violet-400/5 border border-violet-400/20">
+              <div className="text-[12px] font-semibold text-violet-300 mb-2 flex items-center gap-1.5"><Sparkles size={13} /> AI match results</div>
+              {matches.matches?.length > 0 ? matches.matches.map((m) => (
+                <div key={m.item} className="flex items-center justify-between py-1.5 border-b border-white/10 last:border-0">
+                  <div className="text-[12px]">{m.item}<div className="text-[11px] text-slate-500">{m.reason}</div></div>
+                  <Badge tone={m.confidence > 70 ? 'emerald' : m.confidence > 40 ? 'amber' : 'muted'}>{m.confidence}%</Badge>
+                </div>
+              )) : <div className="text-[12px] text-slate-400">No matching reports yet.</div>}
+              {matches.advice && <div className="text-[11.5px] text-slate-400 mt-2">💡 {matches.advice}</div>}
+            </div>
+          )}
         </Card>
 
         <Card>
