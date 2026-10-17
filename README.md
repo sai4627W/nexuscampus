@@ -13,7 +13,7 @@ A unified campus operations platform that collapses navigation, attendance, dini
 [![Groq](https://img.shields.io/badge/Groq-LLM%20Inference-F55036?style=flat-square)](https://groq.com)
 [![License](https://img.shields.io/badge/License-ISC-blue?style=flat-square)](#license)
 
-[**Live Demo**](https://nexuscampus.vercel.app) · [Report a Bug](https://github.com/sai4627W/nexuscampus/issues) · [Request a Feature](https://github.com/sai4627W/nexuscampus/issues)
+[**Live Demo**](https://nexuscampus-siddhxx.netlify.app) · [Report a Bug](https://github.com/sai4627W/nexuscampus/issues) · [Request a Feature](https://github.com/sai4627W/nexuscampus/issues)
 
 </div>
 
@@ -232,7 +232,7 @@ Create a `.env` file in the project root (see `.env.example`). Vite only exposes
 
 1. Create a project in the [Firebase Console](https://console.firebase.google.com).
 2. **Build → Authentication → Sign-in method**: enable **Google** and **Email/Password**.
-3. **Authentication → Settings → Authorized domains**: add your production domain (e.g. `your-app.vercel.app`) — `localhost` is included by default for development.
+3. **Authentication → Settings → Authorized domains**: add your production domain (e.g. `your-site.netlify.app`) — `localhost` is included by default for development.
 4. **Build → Firestore Database → Create database**, then publish the rules from [`firestore.rules`](./firestore.rules).
 5. **Project settings → Your apps** → add a Web app and copy the config values into your `.env`.
 
@@ -240,14 +240,23 @@ Create a `.env` file in the project root (see `.env.example`). Vite only exposes
 
 ## Deployment
 
-### Vercel (recommended)
-1. Push the repository to GitHub.
-2. Vercel → **Add New Project** → import the repo (framework auto-detects as **Vite**).
-3. Add all `VITE_*` variables under **Settings → Environment Variables** (Production, Preview, Development).
-4. **Deploy**. After changing env vars, trigger a fresh **Redeploy** (uncheck *Use existing Build Cache*).
+This project is deployed on **Netlify** — https://nexuscampus-siddhxx.netlify.app
 
 ### Netlify
-A [`netlify.toml`](./netlify.toml) is included with the build command and publish directory preconfigured.
+A [`netlify.toml`](./netlify.toml) is included with the build command, publish directory, and SPA redirect preconfigured.
+
+**Option A — Drag & drop (fastest):**
+1. Run `npm run build` (with your `.env` present — Vite bakes env vars into the bundle at build time).
+2. Open [app.netlify.com/drop](https://app.netlify.com/drop) and drag the generated `dist/` folder in.
+3. Netlify assigns a live URL. Add that host to Firebase → Authentication → Settings → **Authorized domains**.
+
+**Option B — Git-connected (auto-deploys):**
+1. Netlify → **Add new site → Import an existing project** → pick the GitHub repo.
+2. Build command `npm run build`, publish directory `dist` (auto-read from `netlify.toml`).
+3. Add all `VITE_*` variables under **Site configuration → Environment variables**, then deploy.
+
+### Vercel
+Also compatible: [`vercel.json`](./vercel.json) is included. Import the repo, add the `VITE_*` variables in **Settings → Environment Variables**, and deploy. After any env change, trigger a fresh **Redeploy** (uncheck *Use existing Build Cache*).
 
 ---
 
